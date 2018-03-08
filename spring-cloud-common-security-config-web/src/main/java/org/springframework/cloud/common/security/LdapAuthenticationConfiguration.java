@@ -51,7 +51,7 @@ public class LdapAuthenticationConfiguration extends GlobalAuthenticationConfigu
 		final String rolePrefix = "ROLE_";
 		ldapConfigurer.rolePrefix(rolePrefix);
 
-		if (this.ldapSecurityProperties.getRoleMappings() != null || !this.ldapSecurityProperties.getRoleMappings().isEmpty()) {
+		if (this.ldapSecurityProperties.getRoleMappings() != null && !this.ldapSecurityProperties.getRoleMappings().isEmpty()) {
 			final LdapAuthorityMapper ldapAuthorityMapper = new LdapAuthorityMapper(ldapSecurityProperties.getRoleMappings());
 			ldapAuthorityMapper.setRolePrefix(rolePrefix);
 			ldapConfigurer.authoritiesMapper(ldapAuthorityMapper);
