@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,15 +127,8 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 						.permitAll()
 						.antMatchers(this.authorizationProperties.getAuthenticatedPaths().toArray(new String[0]))
 						.authenticated();
-		if (this.authorizationProperties.isEnabled()) {
-			security = SecurityConfigUtils.configureSimpleSecurity(security, this.authorizationProperties);
-			security.anyRequest().denyAll();
-			this.securityStateBean.setAuthorizationEnabled(true);
-		}
-		else {
-			security.anyRequest().authenticated();
-			this.securityStateBean.setAuthorizationEnabled(false);
-		}
+		security = SecurityConfigUtils.configureSimpleSecurity(security, this.authorizationProperties);
+		security.anyRequest().denyAll();
 		http.httpBasic().and()
 				.logout()
 				.logoutSuccessUrl(dashboard("/logout-success-oauth.html"))

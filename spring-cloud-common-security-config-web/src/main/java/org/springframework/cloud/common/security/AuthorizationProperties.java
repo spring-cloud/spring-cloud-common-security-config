@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 the original author or authors.
+ * Copyright 2016-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import java.util.List;
  */
 public class AuthorizationProperties {
 
-	private boolean enabled = true;
-
 	private String externalAuthoritiesUrl;
 
 	private List<String> rules = new ArrayList<>();
@@ -54,14 +52,6 @@ public class AuthorizationProperties {
 
 	public void setRules(List<String> rules) {
 		this.rules = rules;
-	}
-
-	public boolean isEnabled() {
-		return enabled;
-	}
-
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
 	}
 
 	public String getExternalAuthoritiesUrl() {

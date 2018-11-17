@@ -99,9 +99,7 @@ public class BasicAuthSecurityConfiguration extends WebSecurityConfigurerAdapter
 				.antMatchers(this.authorizationProperties.getAuthenticatedPaths().toArray(new String[0])).authenticated()
 				.antMatchers(this.authorizationProperties.getPermitAllPaths().toArray(new String[0]))
 				.permitAll();
-		if (this.authorizationProperties.isEnabled()) {
 			security = SecurityConfigUtils.configureSimpleSecurity(security, authorizationProperties);
-		}
 		final String loginPage = dashboard(this.authorizationProperties.getLoginUrl());
 		security.and().formLogin().loginPage(loginPage)
 				.loginProcessingUrl(dashboard(this.authorizationProperties.getLoginProcessingUrl()))
@@ -112,12 +110,7 @@ public class BasicAuthSecurityConfiguration extends WebSecurityConfigurerAdapter
 				.exceptionHandling()
 				.defaultAuthenticationEntryPointFor(new LoginUrlAuthenticationEntryPoint(loginPage), textHtmlMatcher)
 				.defaultAuthenticationEntryPointFor(basicAuthenticationEntryPoint, AnyRequestMatcher.INSTANCE);
-		if (this.authorizationProperties.isEnabled()) {
-			security.anyRequest().denyAll();
-		}
-		else {
-			security.anyRequest().authenticated();
-		}
+		security.anyRequest().denyAll();
 		final SessionRepositoryFilter sessionRepositoryFilter = new SessionRepositoryFilter(
 				sessionRepository());
 		sessionRepositoryFilter.setHttpSessionIdResolver(HeaderHttpSessionIdResolver.xAuthToken());
@@ -125,7 +118,6 @@ public class BasicAuthSecurityConfiguration extends WebSecurityConfigurerAdapter
 		http.addFilterBefore(sessionRepositoryFilter, ChannelProcessingFilter.class).csrf().disable();
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
 		this.securityStateBean.setAuthenticationEnabled(true);
-		this.securityStateBean.setAuthorizationEnabled(true);
 	}
 
 	/**
