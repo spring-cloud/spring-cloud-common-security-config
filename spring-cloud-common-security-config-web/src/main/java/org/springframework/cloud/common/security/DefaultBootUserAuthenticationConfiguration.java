@@ -30,8 +30,8 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.util.StringUtils;
 
 /**
- * Activated if basic authentication is enabled and neither
- * {@link FileAuthenticationConfiguration} nor {@link LdapAuthenticationConfiguration} are
+ * Activated if basic authentication is enabled and
+ * {@link FileAuthenticationConfiguration} is not
  * loaded. In that case the Spring Boot default user is used and if that user was not
  * explicitly customized by the user, the user will get full access to the application,
  * assigning her all applicable roles.
