@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.SecurityProperties.User;
 import org.springframework.cloud.common.security.support.CoreSecurityRoles;
-import org.springframework.cloud.common.security.support.OnDefaultBootUserAuthenticationEnabled;
 import org.springframework.cloud.common.security.support.OnSecurityEnabledAndOAuth2Disabled;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -30,17 +29,15 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.util.StringUtils;
 
 /**
- * Activated if basic authentication is enabled and
- * {@link FileAuthenticationConfiguration} is not
- * loaded. In that case the Spring Boot default user is used and if that user was not
- * explicitly customized by the user, the user will get full access to the application,
+ * Activated if basic authentication is enabled. In that case the Spring Boot default user is used and if
+ * that user was not explicitly customized by the user, the user will get full access to the application,
  * assigning her all applicable roles.
  *
  * @author Gunnar Hillert
  * @since 1.2.0
  */
 @Configuration
-@Conditional({ OnDefaultBootUserAuthenticationEnabled.class, OnSecurityEnabledAndOAuth2Disabled.class })
+@Conditional(OnSecurityEnabledAndOAuth2Disabled.class)
 public class DefaultBootUserAuthenticationConfiguration extends GlobalAuthenticationConfigurerAdapter {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(BasicAuthSecurityConfiguration.class);
