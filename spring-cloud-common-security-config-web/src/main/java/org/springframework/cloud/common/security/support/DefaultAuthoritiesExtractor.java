@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,16 @@ package org.springframework.cloud.common.security.support;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.LoggerFactory;
-
 import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
 import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -41,6 +42,21 @@ public class DefaultAuthoritiesExtractor implements AuthoritiesExtractor {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DefaultAuthoritiesExtractor.class);
 
+	private final boolean mapOauthScopesToAuthorities;
+	private final OAuth2RestOperations restTemplate;
+
+	public DefaultAuthoritiesExtractor(boolean mapOauthScopesToAuthorities, OAuth2RestOperations restTemplate) {
+		super();
+		this.mapOauthScopesToAuthorities = mapOauthScopesToAuthorities;
+		this.restTemplate = restTemplate;
+	}
+
+	public DefaultAuthoritiesExtractor() {
+		super();
+		this.mapOauthScopesToAuthorities = false;
+		this.restTemplate = null;
+	}
+
 	/**
 	 * The returned {@link List} of {@link GrantedAuthority}s contains all roles from
 	 * {@link CoreSecurityRoles}. The roles are prefixed with the value specified in
@@ -54,14 +70,37 @@ public class DefaultAuthoritiesExtractor implements AuthoritiesExtractor {
 		Assert.notNull(map, "The map argument must not be null.");
 
 		final List<String> rolesAsStrings = new ArrayList<>();
-		final List<GrantedAuthority> grantedAuthorities =
-			Stream.of(CoreSecurityRoles.values())
-				.map(roleEnum -> {
-					final String roleName = SecurityConfigUtils.ROLE_PREFIX + roleEnum.getKey();
-					rolesAsStrings.add(roleName);
-					return new SimpleGrantedAuthority(roleName);
-				})
-				.collect(Collectors.toList());
+
+		final List<GrantedAuthority> grantedAuthorities;
+
+		if (this.mapOauthScopesToAuthorities) {
+			Set<String> scopes = this.restTemplate.getAccessToken().getScope();
+			grantedAuthorities = new ArrayList<>();
+
+			if (scopes != null) {
+				for (CoreSecurityRoles roleEnum : CoreSecurityRoles.values()) {
+					for (String scope : scopes) {
+						if (roleEnum.getKey().equalsIgnoreCase(scope)) {
+							final String roleName = SecurityConfigUtils.ROLE_PREFIX + roleEnum.getKey();
+							rolesAsStrings.add(roleName);
+							grantedAuthorities.add(new SimpleGrantedAuthority(roleName));
+						}
+					}
+				}
+			}
+		}
+		else {
+			grantedAuthorities =
+					Stream.of(CoreSecurityRoles.values())
+						.map(roleEnum -> {
+							final String roleName = SecurityConfigUtils.ROLE_PREFIX + roleEnum.getKey();
+							rolesAsStrings.add(roleName);
+							return new SimpleGrantedAuthority(roleName);
+						})
+						.collect(Collectors.toList());
+		}
+
+
 		logger.info("Adding ALL roles {} to user {}", StringUtils.collectionToCommaDelimitedString(rolesAsStrings), map);
 		return grantedAuthorities;
 	}

@@ -46,6 +46,8 @@ public class AuthorizationProperties {
 
 	private List<String> authenticatedPaths = new ArrayList<>();
 
+	private boolean mapOauthScopes = false;
+
 	public List<String> getRules() {
 		return rules;
 	}
@@ -117,4 +119,19 @@ public class AuthorizationProperties {
 	public void setAuthenticatedPaths(List<String> authenticatedPaths) {
 		this.authenticatedPaths = authenticatedPaths;
 	}
+
+	public boolean isMapOauthScopes() {
+		return mapOauthScopes;
+	}
+
+	/**
+	 * If set to true, Oauth scopes will be mapped to corresponding Data Flow roles.
+	 * Otherwise, if set to false, or not set at all, all roles will be assigned to users.
+	 *
+	 * @param mapOauthScopes If not set defaults to false
+	 */
+	public void setMapOauthScopes(boolean mapOauthScopes) {
+		this.mapOauthScopes = mapOauthScopes;
+	}
+
 }

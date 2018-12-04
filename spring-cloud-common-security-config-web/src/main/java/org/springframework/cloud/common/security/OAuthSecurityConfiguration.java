@@ -23,15 +23,17 @@ import java.util.List;
 import javax.servlet.Filter;
 
 import org.slf4j.LoggerFactory;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.PrincipalExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.UserInfoTokenServices;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.cloud.common.security.support.DataflowPrincipalExtractor;
 import org.springframework.cloud.common.security.support.DefaultAuthoritiesExtractor;
 import org.springframework.cloud.common.security.support.ExternalOauth2ResourceAuthoritiesExtractor;
-import org.springframework.cloud.common.security.support.OnSecurityEnabledAndOAuth2Enabled;
+import org.springframework.cloud.common.security.support.OnOAuth2SecurityEnabled;
 import org.springframework.cloud.common.security.support.SecurityConfigUtils;
 import org.springframework.cloud.common.security.support.SecurityStateBean;
 import org.springframework.context.ApplicationEventPublisher;
@@ -51,6 +53,7 @@ import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.filter.OAuth2AuthenticationFailureEvent;
 import org.springframework.security.oauth2.client.filter.OAuth2ClientAuthenticationProcessingFilter;
+import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationManager;
@@ -74,7 +77,7 @@ import org.springframework.web.context.request.NativeWebRequest;
  */
 @EnableOAuth2Client
 @Configuration
-@Conditional(OnSecurityEnabledAndOAuth2Enabled.class)
+@Conditional(OnOAuth2SecurityEnabled.class)
 public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(OAuthSecurityConfiguration.class);
@@ -99,6 +102,9 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 	@Autowired
 	protected AuthorizationProperties authorizationProperties;
+
+	@Autowired(required = false)
+	private PrincipalExtractor principalExtractor;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -148,12 +154,19 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 		tokenServices.setRestTemplate(oAuth2RestTemplate());
 		final AuthoritiesExtractor authoritiesExtractor;
 		if (StringUtils.isEmpty(authorizationProperties.getExternalAuthoritiesUrl())) {
-			authoritiesExtractor = new DefaultAuthoritiesExtractor();
+			authoritiesExtractor = new DefaultAuthoritiesExtractor(authorizationProperties.isMapOauthScopes(), oAuth2RestTemplate());
 		} else {
 			authoritiesExtractor = new ExternalOauth2ResourceAuthoritiesExtractor(
 					oAuth2RestTemplate(), URI.create(authorizationProperties.getExternalAuthoritiesUrl()));
 		}
 		tokenServices.setAuthoritiesExtractor(authoritiesExtractor);
+
+		if (this.principalExtractor == null) {
+			tokenServices.setPrincipalExtractor(new DataflowPrincipalExtractor());
+		}
+		else {
+			tokenServices.setPrincipalExtractor(this.principalExtractor);
+		}
 		return tokenServices;
 	}
 
@@ -162,6 +175,14 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 		final OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(authorizationCodeResourceDetails,
 				oauth2ClientContext);
 		return oAuth2RestTemplate;
+	}
+
+	@Bean
+	public FilterRegistrationBean<OAuth2ClientContextFilter> oauth2ClientFilterRegistration(OAuth2ClientContextFilter filter) {
+		FilterRegistrationBean<OAuth2ClientContextFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(filter);
+		registration.setOrder(-100);
+		return registration;
 	}
 
 	@Bean
