@@ -16,7 +16,9 @@
 package org.springframework.cloud.common.security;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Holds configuration for the authorization aspects of security.
@@ -47,6 +49,8 @@ public class AuthorizationProperties {
 	private List<String> authenticatedPaths = new ArrayList<>();
 
 	private boolean mapOauthScopes = false;
+
+	private Map<String, String> roleMappings = new HashMap<>(0);
 
 	public List<String> getRules() {
 		return rules;
@@ -134,4 +138,20 @@ public class AuthorizationProperties {
 		this.mapOauthScopes = mapOauthScopes;
 	}
 
+	/**
+	 * When using OAuth2 with enabled {@link #setMapOauthScopes(boolean)}, you can optionally specify a custom
+	 * mapping of OAuth scopes to role names as they exist in the Data Flow application. If not
+	 * set, then the OAuth scopes themselves must match the role names:
+	 *
+	 * <ul>
+	 *   <li>MANAGE = dataflow.manage
+	 *   <li>VIEW = dataflow.view
+	 *   <li>CREATE = dataflow.create
+	 * </ul>
+	 *
+	 * @return Optional (May be null). Returns a map of scope-to-role mappings.
+	 */
+	public Map<String, String> getRoleMappings() {
+		return roleMappings;
+	}
 }

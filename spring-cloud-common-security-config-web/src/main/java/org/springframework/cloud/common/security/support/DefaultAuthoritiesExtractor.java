@@ -16,11 +16,11 @@
 package org.springframework.cloud.common.security.support;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
@@ -29,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -43,17 +44,25 @@ public class DefaultAuthoritiesExtractor implements AuthoritiesExtractor {
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DefaultAuthoritiesExtractor.class);
 
 	private final boolean mapOauthScopesToAuthorities;
+	private final Map<CoreSecurityRoles, String> roleMappings;
+	private String rolePrefix = "ROLE_";
+	private String oauthScopePrefix = "dataflow.";
+
 	private final OAuth2RestOperations restTemplate;
 
-	public DefaultAuthoritiesExtractor(boolean mapOauthScopesToAuthorities, OAuth2RestOperations restTemplate) {
+	public DefaultAuthoritiesExtractor(boolean mapOauthScopesToAuthorities,
+				Map<String, String> roleMappings,
+				OAuth2RestOperations restTemplate) {
 		super();
 		this.mapOauthScopesToAuthorities = mapOauthScopesToAuthorities;
+		this.roleMappings = prepareRoleMappings(roleMappings);
 		this.restTemplate = restTemplate;
 	}
 
 	public DefaultAuthoritiesExtractor() {
 		super();
 		this.mapOauthScopesToAuthorities = false;
+		this.roleMappings = prepareRoleMappings(null);
 		this.restTemplate = null;
 	}
 
@@ -74,34 +83,94 @@ public class DefaultAuthoritiesExtractor implements AuthoritiesExtractor {
 		final List<GrantedAuthority> grantedAuthorities;
 
 		if (this.mapOauthScopesToAuthorities) {
-			Set<String> scopes = this.restTemplate.getAccessToken().getScope();
+			final Set<String> scopes = this.restTemplate.getAccessToken().getScope();
 			grantedAuthorities = new ArrayList<>();
 
-			if (scopes != null) {
-				for (CoreSecurityRoles roleEnum : CoreSecurityRoles.values()) {
+			if (scopes != null && !scopes.isEmpty()) {
+				for (Map.Entry<CoreSecurityRoles, String> roleMappingEngtry : this.roleMappings.entrySet()) {
+					final CoreSecurityRoles role = roleMappingEngtry.getKey();
+					final String expectedOAuthScope = roleMappingEngtry.getValue();
 					for (String scope : scopes) {
-						if (roleEnum.getKey().equalsIgnoreCase(scope)) {
-							final String roleName = SecurityConfigUtils.ROLE_PREFIX + roleEnum.getKey();
-							rolesAsStrings.add(roleName);
-							grantedAuthorities.add(new SimpleGrantedAuthority(roleName));
+						if (scope.equalsIgnoreCase(expectedOAuthScope)) {
+							final SimpleGrantedAuthority oauthRoleAuthority = new SimpleGrantedAuthority(this.rolePrefix + role.getKey());
+							rolesAsStrings.add(oauthRoleAuthority.getAuthority());
+							grantedAuthorities.add(oauthRoleAuthority);
 						}
 					}
 				}
+				logger.info("Adding roles {} to user {}", StringUtils.collectionToCommaDelimitedString(rolesAsStrings), map);
 			}
 		}
 		else {
 			grantedAuthorities =
-					Stream.of(CoreSecurityRoles.values())
-						.map(roleEnum -> {
-							final String roleName = SecurityConfigUtils.ROLE_PREFIX + roleEnum.getKey();
-							rolesAsStrings.add(roleName);
-							return new SimpleGrantedAuthority(roleName);
-						})
-						.collect(Collectors.toList());
+					this.roleMappings.entrySet().stream().map(mapEntry -> {
+						final String roleName = mapEntry.getKey().getKey();
+						rolesAsStrings.add(roleName);
+						return new SimpleGrantedAuthority(this.rolePrefix + mapEntry.getKey().getKey());
+					}).collect(Collectors.toList());
+			logger.info("Adding ALL roles {} to user {}", StringUtils.collectionToCommaDelimitedString(rolesAsStrings), map);
+		}
+		return grantedAuthorities;
+	}
+
+	/**
+	 *
+	 * @param rawRoleMappings
+	 * @param mapOauthScopesToAuthorities
+	 * @return
+	 */
+	private Map<CoreSecurityRoles, String> prepareRoleMappings(Map<String, String> rawRoleMappings) {
+
+		final Map<CoreSecurityRoles, String> roleMappings = new HashMap<>(0);
+
+		if (CollectionUtils.isEmpty(rawRoleMappings)) {
+			for (CoreSecurityRoles roleEnum : CoreSecurityRoles.values()) {
+				final String roleName = this.oauthScopePrefix + roleEnum.getKey();
+				roleMappings.put(roleEnum, roleName);
+			}
+			return roleMappings;
 		}
 
+		final List<CoreSecurityRoles> unmappedRoles = new ArrayList<>(0);
 
-		logger.info("Adding ALL roles {} to user {}", StringUtils.collectionToCommaDelimitedString(rolesAsStrings), map);
-		return grantedAuthorities;
+		for (CoreSecurityRoles coreRole : CoreSecurityRoles.values()) {
+
+			final String coreSecurityRoleName;
+			if (this.rolePrefix.length() > 0 && !coreRole.getKey().startsWith(rolePrefix)) {
+				coreSecurityRoleName = rolePrefix + coreRole.getKey();
+			}
+			else {
+				coreSecurityRoleName = coreRole.getKey();
+			}
+
+			final String oauthScope = rawRoleMappings.get(coreSecurityRoleName);
+
+			if (oauthScope == null) {
+				unmappedRoles.add(coreRole);
+			}
+			else {
+				roleMappings.put(coreRole, oauthScope);
+			}
+		}
+
+		if (!unmappedRoles.isEmpty()) {
+			throw new IllegalArgumentException(
+				String.format("The following %s %s not mapped: %s.",
+					unmappedRoles.size(),
+					unmappedRoles.size() > 1 ? "roles are" : "role is",
+					StringUtils.collectionToCommaDelimitedString(unmappedRoles)));
+		}
+
+		return roleMappings;
+	}
+
+	/**
+	 * Sets the prefix which should be added to the authority name (if it doesn't already
+	 * exist)
+	 *
+	 */
+	public void setRolePrefix(String rolePrefix) {
+		Assert.notNull(rolePrefix, "rolePrefix cannot be null");
+		this.rolePrefix = rolePrefix;
 	}
 }

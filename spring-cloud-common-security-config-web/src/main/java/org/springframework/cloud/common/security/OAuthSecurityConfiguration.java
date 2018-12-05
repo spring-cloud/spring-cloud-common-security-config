@@ -154,7 +154,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 		tokenServices.setRestTemplate(oAuth2RestTemplate());
 		final AuthoritiesExtractor authoritiesExtractor;
 		if (StringUtils.isEmpty(authorizationProperties.getExternalAuthoritiesUrl())) {
-			authoritiesExtractor = new DefaultAuthoritiesExtractor(authorizationProperties.isMapOauthScopes(), oAuth2RestTemplate());
+			authoritiesExtractor = new DefaultAuthoritiesExtractor(authorizationProperties.isMapOauthScopes(), authorizationProperties.getRoleMappings(), oAuth2RestTemplate());
 		} else {
 			authoritiesExtractor = new ExternalOauth2ResourceAuthoritiesExtractor(
 					oAuth2RestTemplate(), URI.create(authorizationProperties.getExternalAuthoritiesUrl()));
