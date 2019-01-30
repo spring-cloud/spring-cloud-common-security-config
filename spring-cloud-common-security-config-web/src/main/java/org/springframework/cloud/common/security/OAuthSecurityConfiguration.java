@@ -117,7 +117,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	protected AuthorizationProperties authorizationProperties;
 
-
 	@Autowired
 	protected BaseOAuth2ProtectedResourceDetails clientCredentialsResourceDetails;
 
@@ -169,8 +168,11 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Bean
 	protected DataFlowUserInfoTokenServices resourceServerTokenServices() {
 
-		final DataFlowUserInfoTokenServices tokenServices = new DataFlowUserInfoTokenServices(resourceServerProperties.getUserInfoUri(),
-				authorizationCodeResourceDetails.getClientId());
+		final DataFlowUserInfoTokenServices tokenServices = new DataFlowUserInfoTokenServices(
+				resourceServerProperties.getUserInfoUri(),
+				resourceServerProperties.getTokenInfoUri(),
+				authorizationCodeResourceDetails.getClientId(),
+				authorizationCodeResourceDetails.getClientSecret());
 
 		tokenServices.setTokenStore(new InMemoryTokenStore());
 		tokenServices.setSupportRefreshToken(true);

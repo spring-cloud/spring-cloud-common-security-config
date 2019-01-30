@@ -8,12 +8,10 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.FixedAuthoritiesExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.FixedPrincipalExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.PrincipalExtractor;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -57,9 +55,6 @@ public class DataFlowUserInfoTokenServices extends DefaultTokenServices {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
-	@Autowired
-	private ResourceServerProperties resourceServerProperties;
-
 	/**
 	 * Need access to {@link TokenStore}, unfortunately it is private in {@link DefaultTokenServices}.
 	 */
@@ -71,8 +66,10 @@ public class DataFlowUserInfoTokenServices extends DefaultTokenServices {
 	private ClientDetailsService clientDetailsService;
 
 	private final String userInfoEndpointUrl;
+	private final String tokenInfoUri;
 
 	private final String clientId;
+	private final String clientSecret;
 
 	private OAuth2RestOperations restTemplate;
 
@@ -91,9 +88,27 @@ public class DataFlowUserInfoTokenServices extends DefaultTokenServices {
 	private RestOperations remoteTokenRestTemplate;
 	private AccessTokenConverter tokenConverter = new DefaultAccessTokenConverter();
 
-	public DataFlowUserInfoTokenServices(String userInfoEndpointUrl, String clientId) {
+	/**
+	 * Initialize the DataFlowUserInfoTokenServices.
+	 *
+	 * @param userInfoEndpointUrl Must not be empty
+	 * @param tokenInfoUri Must not be empty
+	 * @param clientId Must not be empty
+	 * @param clientSecret Must not be empty
+	 */
+	public DataFlowUserInfoTokenServices(
+			String userInfoEndpointUrl, String tokenInfoUri,
+			String clientId, String clientSecret) {
+
+		Assert.hasText(userInfoEndpointUrl, "The userInfoEndpointUrl must be set.");
+		Assert.hasText(tokenInfoUri, "The tokenInfoUri must be set.");
+		Assert.hasText(clientId, "The clientId must be set.");
+		Assert.hasText(clientSecret, "The clientSecret must be set.");
+
 		this.userInfoEndpointUrl = userInfoEndpointUrl;
+		this.tokenInfoUri = tokenInfoUri;
 		this.clientId = clientId;
+		this.clientSecret = clientSecret;
 
 		final ObjectMapper objectMapper = new ObjectMapper();
 		objectMapper.configure(DeserializationFeature.USE_LONG_FOR_INTS, true);
@@ -268,9 +283,9 @@ public class DataFlowUserInfoTokenServices extends DefaultTokenServices {
 		MultiValueMap<String, String> formData = new LinkedMultiValueMap<String, String>();
 		formData.add(tokenName, accessToken);
 		HttpHeaders headers = new HttpHeaders();
-		headers.set("Authorization", getAuthorizationHeader(clientId, resourceServerProperties.getClientSecret()));
+		headers.set("Authorization", getAuthorizationHeader(this.clientId, this.clientSecret));
 
-		Map<String, Object> map = postForMap(resourceServerProperties.getTokenInfoUri(), formData, headers);
+		Map<String, Object> map = postForMap(this.tokenInfoUri, formData, headers);
 
 		if (map.containsKey("error")) {
 			if (this.logger.isDebugEnabled()) {
