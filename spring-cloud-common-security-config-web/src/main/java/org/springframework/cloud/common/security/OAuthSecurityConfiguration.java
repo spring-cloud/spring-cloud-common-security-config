@@ -199,8 +199,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	protected OAuth2RestTemplate oAuth2RestTemplate() {
 		final OAuth2RestTemplate oAuth2RestTemplate = new OAuth2RestTemplate(authorizationCodeResourceDetails,
 				oauth2ClientContext);
-		oAuth2RestTemplate.setAccessTokenProvider(userAccessTokenProvider());
-
 		return oAuth2RestTemplate;
 	}
 
@@ -281,7 +279,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 		@Override
 		public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-			// TODO Auto-generated method stub
 			super.configure(resources);
 			resources.tokenServices(resourceServerTokenServices);
 		}
