@@ -32,7 +32,7 @@ import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.PrincipalExtractor;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceServerProperties;
-import org.springframework.cloud.common.security.support.DataFlowUserInfoTokenServices;
+import org.springframework.cloud.common.security.support.TokenValidatingUserInfoTokenServices;
 import org.springframework.cloud.common.security.support.DataflowPrincipalExtractor;
 import org.springframework.cloud.common.security.support.DefaultAuthoritiesExtractor;
 import org.springframework.cloud.common.security.support.ExternalOauth2ResourceAuthoritiesExtractor;
@@ -166,9 +166,9 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	protected DataFlowUserInfoTokenServices resourceServerTokenServices() {
+	protected TokenValidatingUserInfoTokenServices resourceServerTokenServices() {
 
-		final DataFlowUserInfoTokenServices tokenServices = new DataFlowUserInfoTokenServices(
+		final TokenValidatingUserInfoTokenServices tokenServices = new TokenValidatingUserInfoTokenServices(
 				resourceServerProperties.getUserInfoUri(),
 				resourceServerProperties.getTokenInfoUri(),
 				authorizationCodeResourceDetails.getClientId(),
