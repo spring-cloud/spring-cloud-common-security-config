@@ -49,7 +49,7 @@ public class ExternalOauth2ResourceAuthoritiesExtractorTests {
 	@Test
 	public void testExtractAuthorities() {
 		assertAuthorities(URI.create("http://test/authorities"), "VIEW");
-		assertAuthorities(URI.create("http://the.authorities.server/authorities"), "VIEW", "CREATE", "MANAGE");
+		assertAuthorities(URI.create("https://the.authorities.server/authorities"), "VIEW", "CREATE", "MANAGE");
 		assertAuthorities(URI.create("http://server/"), "MANAGE");
 	}
 
