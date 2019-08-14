@@ -50,10 +50,17 @@ public class OAuth2AccessTokenProvidingClientHttpRequestInterceptor implements C
 	public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
 			throws IOException {
 
-		final String token = TokenUtils.getAccessToken();
+		final String tokenToUse;
 
-		if (token != null) {
-			request.getHeaders().add(HttpHeaders.AUTHORIZATION, OAuth2AccessToken.BEARER_TYPE + " " + token);
+		if (this.staticOauthAccessToken != null) {
+			tokenToUse = this.staticOauthAccessToken;
+		}
+		else {
+			tokenToUse = TokenUtils.getAccessToken();
+		}
+
+		if (tokenToUse != null) {
+			request.getHeaders().add(HttpHeaders.AUTHORIZATION, OAuth2AccessToken.BEARER_TYPE + " " + tokenToUse);
 		}
 		return execution.execute(request, body);
 	}
