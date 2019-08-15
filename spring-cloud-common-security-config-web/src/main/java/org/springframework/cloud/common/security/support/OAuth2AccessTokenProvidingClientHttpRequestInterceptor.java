@@ -33,7 +33,7 @@ import org.springframework.util.Assert;
  */
 public class OAuth2AccessTokenProvidingClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
 
-	final String staticOauthAccessToken;
+	private final String staticOauthAccessToken;
 
 	public OAuth2AccessTokenProvidingClientHttpRequestInterceptor(String staticOauthAccessToken) {
 		super();
