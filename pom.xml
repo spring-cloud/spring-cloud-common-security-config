@@ -19,6 +19,7 @@
     </parent>
 
     <modules>
+        <module>spring-cloud-common-security-config-core</module>
         <module>spring-cloud-common-security-config-web</module>
         <module>spring-cloud-starter-common-security-config-web</module>
     </modules>
