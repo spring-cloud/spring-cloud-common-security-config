@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 the original author or authors.
+ * Copyright 2016-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.util.StringUtils;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
+
 /**
  * Holds configuration for the authorization aspects of security.
  *
@@ -28,7 +32,7 @@ import java.util.Map;
  * @author Ilayaperumal Gopinathan
  * @author Mike Heath
  */
-public class AuthorizationProperties {
+public class AuthorizationProperties implements Validator {
 
 	private String externalAuthoritiesUrl;
 
@@ -48,9 +52,16 @@ public class AuthorizationProperties {
 
 	private List<String> authenticatedPaths = new ArrayList<>();
 
-	private boolean mapOauthScopes = false;
+	/**
+	 * Role-mapping configuration per OAuth2 provider.
+	 */
+	private final Map<String, ProviderRoleMapping> providerRoleMappings = new HashMap<>();
 
-	private Map<String, String> roleMappings = new HashMap<>(0);
+	private String defaultProviderId;
+
+	public Map<String, ProviderRoleMapping> getProviderRoleMappings() {
+		return providerRoleMappings;
+	}
 
 	public List<String> getRules() {
 		return rules;
@@ -124,34 +135,35 @@ public class AuthorizationProperties {
 		this.authenticatedPaths = authenticatedPaths;
 	}
 
-	public boolean isMapOauthScopes() {
-		return mapOauthScopes;
+	public String getDefaultProviderId() {
+		if (this.defaultProviderId != null) {
+			return defaultProviderId;
+		}
+		else if (this.providerRoleMappings.size() == 1) {
+			return this.providerRoleMappings.entrySet().iterator().next().getKey();
+		}
+		else {
+			throw new IllegalStateException("Unable to retrieve default provider id.");
+		}
 	}
 
-	/**
-	 * If set to true, Oauth scopes will be mapped to corresponding Data Flow roles.
-	 * Otherwise, if set to false, or not set at all, all roles will be assigned to users.
-	 *
-	 * @param mapOauthScopes If not set defaults to false
-	 */
-	public void setMapOauthScopes(boolean mapOauthScopes) {
-		this.mapOauthScopes = mapOauthScopes;
+	public void setDefaultProviderId(String defaultProviderId) {
+		this.defaultProviderId = defaultProviderId;
 	}
 
-	/**
-	 * When using OAuth2 with enabled {@link #setMapOauthScopes(boolean)}, you can optionally specify a custom
-	 * mapping of OAuth scopes to role names as they exist in the Data Flow application. If not
-	 * set, then the OAuth scopes themselves must match the role names:
-	 *
-	 * <ul>
-	 *   <li>MANAGE = dataflow.manage
-	 *   <li>VIEW = dataflow.view
-	 *   <li>CREATE = dataflow.create
-	 * </ul>
-	 *
-	 * @return Optional (May be null). Returns a map of scope-to-role mappings.
-	 */
-	public Map<String, String> getRoleMappings() {
-		return roleMappings;
+	@Override
+	public boolean supports(Class<?> clazz) {
+		return clazz == AuthorizationProperties.class;
 	}
+
+	@Override
+	public void validate(Object target, Errors errors) {
+		final AuthorizationProperties properties = (AuthorizationProperties) target;
+
+		if (properties.getProviderRoleMappings().size() > 1
+				&& StringUtils.isEmpty(properties.getDefaultProviderId())) {
+			errors.rejectValue( "defaultProviderId", "Must be set if more than 1 ProviderRoleMapping is used.");
+		}
+	}
+
 }

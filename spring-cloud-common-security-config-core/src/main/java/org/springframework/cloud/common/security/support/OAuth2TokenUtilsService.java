@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.cloud.common.security;
+package org.springframework.cloud.common.security.support;
 
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.core.Authentication;
 
 /**
- * Holder class for an {@link OAuth2AccessToken}. To be used in conjunction with
- * the ManualOAuthAuthenticationProvider.
+ * Service providing OAuth2 Security-related utility methods that may
+ * required other Spring Security services.
  *
  * @author Gunnar Hillert
+ *
  */
-public class ManualOAuthAuthenticationDetails {
+public interface OAuth2TokenUtilsService {
 
-	private OAuth2AccessToken accessToken;
-
-	public ManualOAuthAuthenticationDetails(OAuth2AccessToken accessToken) {
-		this.accessToken = accessToken;
-	}
-
-	public OAuth2AccessToken getAccessToken() {
-		return accessToken;
-	}
+	/**
+	 * Retrieves the access token from the {@link Authentication} implementation.
+	 *
+	 * @return Should never return null.
+	 */
+	String getAccessTokenOfAuthenticatedUser();
 
 }
