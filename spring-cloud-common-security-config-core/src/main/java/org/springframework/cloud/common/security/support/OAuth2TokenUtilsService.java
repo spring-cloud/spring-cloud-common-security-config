@@ -16,6 +16,8 @@
 package org.springframework.cloud.common.security.support;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
 /**
  * Service providing OAuth2 Security-related utility methods that may
@@ -32,5 +34,17 @@ public interface OAuth2TokenUtilsService {
 	 * @return Should never return null.
 	 */
 	String getAccessTokenOfAuthenticatedUser();
+
+	/**
+	 *
+	 * @return
+	 */
+	OAuth2AuthorizedClient getAuthorizedClient(OAuth2AuthenticationToken auth2AuthenticationToken);
+
+	/**
+	 *
+	 * @param auth2AuthorizedClient
+	 */
+	void removeAuthorizedClient(OAuth2AuthorizedClient auth2AuthorizedClient);
 
 }

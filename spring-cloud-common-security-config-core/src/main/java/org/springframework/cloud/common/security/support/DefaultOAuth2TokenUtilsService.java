@@ -52,17 +52,25 @@ public class DefaultOAuth2TokenUtilsService implements OAuth2TokenUtilsService {
 			throw new IllegalStateException("Cannot retrieve the authentication object from the SecurityContext. Are you authenticated?");
 		}
 
-		final OAuth2AuthenticationToken auth2AuthenticationToken;
+		final String accessTokenOfAuthenticatedUser;
 
-		if (authentication instanceof OAuth2AuthenticationToken) {
-			auth2AuthenticationToken = (OAuth2AuthenticationToken) authentication;
+		if (authentication instanceof BearerTokenAuthentication) {
+			accessTokenOfAuthenticatedUser = ((BearerTokenAuthentication) authentication).getToken().getTokenValue();
 		}
-		else if (authentication instanceof BearerTokenAuthentication) {
-			return ((BearerTokenAuthentication) authentication).getToken().getTokenValue();
+		else if (authentication instanceof OAuth2AuthenticationToken) {
+			final OAuth2AuthenticationToken oauth2AuthenticationToken = (OAuth2AuthenticationToken) authentication;
+			final OAuth2AuthorizedClient oauth2AuthorizedClient = this.getAuthorizedClient(oauth2AuthenticationToken);
+			accessTokenOfAuthenticatedUser = oauth2AuthorizedClient.getAccessToken().getTokenValue();
 		}
 		else {
 			throw new IllegalStateException("Authentication object is not of type OAuth2AuthenticationToken.");
 		}
+
+		return accessTokenOfAuthenticatedUser;
+	}
+
+	@Override
+	public OAuth2AuthorizedClient getAuthorizedClient(OAuth2AuthenticationToken auth2AuthenticationToken) {
 
 		final String principalName = auth2AuthenticationToken.getName();
 		final String clientRegistrationId = auth2AuthenticationToken.getAuthorizedClientRegistrationId();
@@ -82,7 +90,14 @@ public class DefaultOAuth2TokenUtilsService implements OAuth2TokenUtilsService {
 				"No oauth2AuthorizedClient returned for clientRegistrationId '%s' and principalName '%s'.",
 				clientRegistrationId, principalName));
 		}
+		return oauth2AuthorizedClient;
+	}
 
-		return oauth2AuthorizedClient.getAccessToken().getTokenValue();
+	@Override
+	public void removeAuthorizedClient(OAuth2AuthorizedClient auth2AuthorizedClient) {
+		Assert.notNull(auth2AuthorizedClient, "The auth2AuthorizedClient must not be null.");
+		this.oauth2AuthorizedClientService.removeAuthorizedClient(
+			auth2AuthorizedClient.getClientRegistration().getRegistrationId(),
+			auth2AuthorizedClient.getPrincipalName());
 	}
 }

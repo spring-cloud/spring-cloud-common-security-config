@@ -36,7 +36,7 @@ import org.springframework.cloud.common.security.support.OAuth2TokenUtilsService
 import org.springframework.cloud.common.security.support.OnOAuth2SecurityEnabled;
 import org.springframework.cloud.common.security.support.SecurityConfigUtils;
 import org.springframework.cloud.common.security.support.SecurityStateBean;
-import org.springframework.cloud.common.security.support.TokenStoreClearingLogoutSuccessHandler;
+import org.springframework.cloud.common.security.support.AccessTokenClearingLogoutSuccessHandler;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -117,6 +117,9 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	ClientRegistrationRepository clientRegistrationRepository;
 	@Autowired
 	OpaqueTokenIntrospector opaqueTokenIntrospector;
+
+	@Autowired
+	OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -228,9 +231,8 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	LogoutSuccessHandler logoutSuccessHandler() {
-		final TokenStoreClearingLogoutSuccessHandler logoutSuccessHandler = new TokenStoreClearingLogoutSuccessHandler(
-				// tokenStore(), oAuth2ClientProperties
-		);
+		final AccessTokenClearingLogoutSuccessHandler logoutSuccessHandler =
+				new AccessTokenClearingLogoutSuccessHandler(this.oauth2TokenUtilsService());
 		logoutSuccessHandler.setDefaultTargetUrl(dashboard("/logout-success-oauth.html"));
 		return logoutSuccessHandler;
 	}
@@ -253,8 +255,8 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	protected OAuth2TokenUtilsService oauth2TokenUtilsService(OAuth2AuthorizedClientService oauth2AuthorizedClientService) {
-		return new DefaultOAuth2TokenUtilsService(oauth2AuthorizedClientService);
+	protected OAuth2TokenUtilsService oauth2TokenUtilsService() {
+		return new DefaultOAuth2TokenUtilsService(this.oauth2AuthorizedClientService);
 	}
 
 	@EventListener
