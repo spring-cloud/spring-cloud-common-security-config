@@ -25,6 +25,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientProperties;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.cloud.common.security.support.AuthoritiesMapper;
 import org.springframework.cloud.common.security.support.CustomAuthoritiesOpaqueTokenIntrospector;
@@ -75,6 +76,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.accept.HeaderContentNegotiationStrategy;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -97,6 +99,9 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(OAuthSecurityConfiguration.class);
 
 	@Autowired
+	protected OAuth2ClientProperties oauth2ClientProperties;
+
+	@Autowired
 	protected SecurityStateBean securityStateBean;
 
 	@Autowired
@@ -112,14 +117,14 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	protected OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
 
 	@Autowired
-	OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient;
+	protected OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient;
 	@Autowired
-	ClientRegistrationRepository clientRegistrationRepository;
+	protected ClientRegistrationRepository clientRegistrationRepository;
 	@Autowired
-	OpaqueTokenIntrospector opaqueTokenIntrospector;
+	protected OpaqueTokenIntrospector opaqueTokenIntrospector;
 
 	@Autowired
-	OAuth2AuthorizedClientService oauth2AuthorizedClientService;
+	protected OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -195,7 +200,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	public AuthoritiesMapper authorityMapper() {
 		return new DefaultAuthoritiesMapper(
 				authorizationProperties.getProviderRoleMappings(),
-				authorizationProperties.getDefaultProviderId());
+				this.calculateDefaultProviderId());
 	}
 
 	@Bean
@@ -243,7 +248,8 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 			this.oAuth2PasswordTokenResponseClient,
 			this.clientRegistrationRepository,
 			this.opaqueTokenIntrospector,
-			this.authorizationProperties.getDefaultProviderId());
+			this.calculateDefaultProviderId());
+
 	}
 
 	@Bean
@@ -290,6 +296,22 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Bean
 	OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient() {
 		return new DefaultPasswordTokenResponseClient();
+	}
+
+	private String calculateDefaultProviderId() {
+		if (this.authorizationProperties.getDefaultProviderId() != null) {
+			return this.authorizationProperties.getDefaultProviderId();
+		}
+		else if (this.oauth2ClientProperties.getRegistration().size() == 1) {
+			return this.oauth2ClientProperties.getRegistration().entrySet().iterator().next().getKey();
+		}
+		else if (this.oauth2ClientProperties.getRegistration().size() > 1
+				&& StringUtils.isEmpty(this.authorizationProperties.getDefaultProviderId())) {
+			throw new IllegalStateException("defaultProviderId must be set if more than 1 Registration is provided.");
+		}
+		else {
+			throw new IllegalStateException("Unable to retrieve default provider id.");
+		}
 	}
 
 }

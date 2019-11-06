@@ -20,10 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.util.StringUtils;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
-
 /**
  * Holds configuration for the authorization aspects of security.
  *
@@ -32,7 +28,7 @@ import org.springframework.validation.Validator;
  * @author Ilayaperumal Gopinathan
  * @author Mike Heath
  */
-public class AuthorizationProperties implements Validator {
+public class AuthorizationProperties {
 
 	private String externalAuthoritiesUrl;
 
@@ -135,35 +131,12 @@ public class AuthorizationProperties implements Validator {
 		this.authenticatedPaths = authenticatedPaths;
 	}
 
-	public String getDefaultProviderId() {
-		if (this.defaultProviderId != null) {
-			return defaultProviderId;
-		}
-		else if (this.providerRoleMappings.size() == 1) {
-			return this.providerRoleMappings.entrySet().iterator().next().getKey();
-		}
-		else {
-			throw new IllegalStateException("Unable to retrieve default provider id.");
-		}
-	}
-
 	public void setDefaultProviderId(String defaultProviderId) {
 		this.defaultProviderId = defaultProviderId;
 	}
 
-	@Override
-	public boolean supports(Class<?> clazz) {
-		return clazz == AuthorizationProperties.class;
-	}
-
-	@Override
-	public void validate(Object target, Errors errors) {
-		final AuthorizationProperties properties = (AuthorizationProperties) target;
-
-		if (properties.getProviderRoleMappings().size() > 1
-				&& StringUtils.isEmpty(properties.getDefaultProviderId())) {
-			errors.rejectValue( "defaultProviderId", "Must be set if more than 1 ProviderRoleMapping is used.");
-		}
+	public String getDefaultProviderId() {
+		return defaultProviderId;
 	}
 
 }
