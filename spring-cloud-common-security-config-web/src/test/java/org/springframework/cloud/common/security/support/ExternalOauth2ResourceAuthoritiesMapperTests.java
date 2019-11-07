@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.cloud.common.security.core.support.OAuth2TokenUtilsService;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;

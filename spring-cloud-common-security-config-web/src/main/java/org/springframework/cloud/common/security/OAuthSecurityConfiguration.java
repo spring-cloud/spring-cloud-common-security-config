@@ -33,10 +33,10 @@ import org.springframework.cloud.common.security.support.CustomOAuth2OidcUserSer
 import org.springframework.cloud.common.security.support.CustomPlainOAuth2UserService;
 import org.springframework.cloud.common.security.support.DefaultAuthoritiesMapper;
 import org.springframework.cloud.common.security.support.DefaultOAuth2TokenUtilsService;
-import org.springframework.cloud.common.security.support.OAuth2TokenUtilsService;
 import org.springframework.cloud.common.security.support.OnOAuth2SecurityEnabled;
 import org.springframework.cloud.common.security.support.SecurityConfigUtils;
 import org.springframework.cloud.common.security.support.SecurityStateBean;
+import org.springframework.cloud.common.security.core.support.OAuth2TokenUtilsService;
 import org.springframework.cloud.common.security.support.AccessTokenClearingLogoutSuccessHandler;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
