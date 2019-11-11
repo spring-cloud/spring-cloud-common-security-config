@@ -40,7 +40,6 @@ import org.springframework.cloud.common.security.support.ExternalOauth2ResourceA
 import org.springframework.cloud.common.security.support.OnOAuth2SecurityEnabled;
 import org.springframework.cloud.common.security.support.SecurityConfigUtils;
 import org.springframework.cloud.common.security.support.SecurityStateBean;
-import org.springframework.cloud.common.security.support.TokenStoreClearingLogoutSuccessHandler;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -72,7 +71,6 @@ import org.springframework.security.oauth2.provider.token.ResourceServerTokenSer
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
@@ -163,7 +161,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 		http.httpBasic().and()
 				.logout()
-				.logoutSuccessHandler(logoutSuccessHandler())
+				.logoutSuccessUrl(dashboard("/logout-success-oauth.html"))
 				.and().csrf().disable()
 				.exceptionHandling()
 				.defaultAuthenticationEntryPointFor(
@@ -171,13 +169,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 						textHtmlMatcher)
 				.defaultAuthenticationEntryPointFor(basicAuthenticationEntryPoint, AnyRequestMatcher.INSTANCE);
 		this.securityStateBean.setAuthenticationEnabled(true);
-	}
-
-	@Bean
-	LogoutSuccessHandler logoutSuccessHandler() {
-		final TokenStoreClearingLogoutSuccessHandler logoutSuccessHandler = new TokenStoreClearingLogoutSuccessHandler(tokenStore(), oAuth2ClientProperties);
-		logoutSuccessHandler.setDefaultTargetUrl(dashboard("/logout-success-oauth.html"));
-		return logoutSuccessHandler;
 	}
 
 	@Bean
