@@ -21,13 +21,11 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cloud.common.security.core.support.OAuth2TokenUtilsService;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * {@link AuthoritiesMapper} that looks up
@@ -54,37 +52,31 @@ public class ExternalOauth2ResourceAuthoritiesMapper implements AuthoritiesMappe
 	public static final GrantedAuthority SCHEDULE = new SimpleGrantedAuthority(SecurityConfigUtils.ROLE_PREFIX + CoreSecurityRoles.SCHEDULE.getKey());
 	public static final GrantedAuthority VIEW = new SimpleGrantedAuthority(SecurityConfigUtils.ROLE_PREFIX + CoreSecurityRoles.VIEW.getKey());
 
-	private final RestTemplate restTemplate;
+	private final WebClient webClient;
 	private final URI roleProviderUri;
-	private final OAuth2TokenUtilsService oauth2TokenUtilsService;
 
 	/**
 	 *
-	 * @param restTemplate used for acquiring the user's access token and
+	 * @param webClient used for acquiring the user's access token and
 	 *                     requesting the user's security roles
 	 * @param roleProviderUri a HTTP GET request is sent to this URI to fetch
 	 *                        the user's security roles
-	 * @param oauth2TokenUtilsService Service to look up Access Tokens for currently authenticated user
 	 */
 	public ExternalOauth2ResourceAuthoritiesMapper(
-		RestTemplate restTemplate,
-		URI roleProviderUri,
-		OAuth2TokenUtilsService oauth2TokenUtilsService) {
-		this.restTemplate = restTemplate;
+		WebClient webClient,
+		URI roleProviderUri) {
+		this.webClient = webClient;
 		this.roleProviderUri = roleProviderUri;
-		this.oauth2TokenUtilsService = oauth2TokenUtilsService;
 	}
 
 	@Override
 	public Set<GrantedAuthority> mapScopesToAuthorities(Set<String> scopes) {
 		logger.debug("Getting permissions from {}", roleProviderUri);
-		final String token = this.oauth2TokenUtilsService.getAccessTokenOfAuthenticatedUser();
-		RequestEntity<?> request = RequestEntity.get(roleProviderUri)
-				.header("Authorization", "bearer " + token).build();
-		final ResponseEntity<String[]> entity = restTemplate.exchange(request, String[].class);
+
+		final ClientResponse entity = webClient.get().uri(roleProviderUri).exchange().block();
 
 		final Set<GrantedAuthority> authorities = new HashSet<>();
-		for (String permission : entity.getBody()) {
+		for (String permission : entity.bodyToMono(String[].class).block()) {
 			if (StringUtils.isEmpty(permission)) {
 				logger.warn("Received an empty permission from {}", roleProviderUri);
 			} else {

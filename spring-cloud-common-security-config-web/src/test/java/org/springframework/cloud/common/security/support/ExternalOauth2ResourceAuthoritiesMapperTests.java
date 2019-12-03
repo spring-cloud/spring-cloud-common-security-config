@@ -14,30 +14,26 @@
  * limitations under the License.
  */package org.springframework.cloud.common.security.support;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.junit.Assert.assertThat;
+
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.springframework.cloud.common.security.core.support.OAuth2TokenUtilsService;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 
 /**
  * @author Mike Heath
@@ -45,36 +41,41 @@ import static org.mockito.Mockito.when;
  */
 public class ExternalOauth2ResourceAuthoritiesMapperTests {
 
-	@Test
-	public void testExtractAuthorities() {
-		assertAuthorities(URI.create("http://test/authorities"), "VIEW");
-		assertAuthorities(URI.create("https://the.authorities.server/authorities"), "VIEW", "CREATE", "MANAGE");
-		assertAuthorities(URI.create("https://server/"), "MANAGE");
-		assertAuthorities(URI.create("https://scdf2/"), "DEPLOY", "DESTROY", "MODIFY", "SCHEDULE");
+	public static MockWebServer mockBackEnd;
+
+	@BeforeClass
+	public static void setUp() throws IOException {
+		mockBackEnd = new MockWebServer();
+		mockBackEnd.start();
 	}
 
-	private void assertAuthorities(URI uri, String... roles) {
-		final String accessToken = UUID.randomUUID().toString();
-		final OAuth2TokenUtilsService oauth2TokenUtilsService = mock(DefaultOAuth2TokenUtilsService.class);
-		when(oauth2TokenUtilsService.getAccessTokenOfAuthenticatedUser()).thenReturn(accessToken);
+	@AfterClass
+	public static void tearDown() throws IOException {
+		mockBackEnd.shutdown();
+	}
 
-		final RestTemplate mockRestTemplate = mock(RestTemplate.class);
+	@Test
+	public void testExtractAuthorities() throws JsonProcessingException {
+		assertAuthorities2(mockBackEnd.url("/authorities").uri(), "VIEW");
+		assertAuthorities2(mockBackEnd.url("/authorities").uri(), "VIEW", "CREATE", "MANAGE");
+		assertAuthorities2(mockBackEnd.url("/").uri(), "MANAGE");
+		assertAuthorities2(mockBackEnd.url("/").uri(), "DEPLOY", "DESTROY", "MODIFY", "SCHEDULE");
+	}
 
-		final ArgumentCaptor<RequestEntity> requestArgumentCaptor = ArgumentCaptor.forClass(RequestEntity.class);
-		when(mockRestTemplate.exchange(requestArgumentCaptor.capture(), (Class<String[]>)any())).thenReturn(new ResponseEntity<>(roles, HttpStatus.OK));
+	private void assertAuthorities2(URI uri, String... roles) throws JsonProcessingException {
+
+		WebClient webClient = WebClient.builder().build();
+		ObjectMapper objectMapper = new ObjectMapper();
+		mockBackEnd.enqueue(new MockResponse()
+				.setBody(objectMapper.writeValueAsString(roles))
+				.addHeader("Content-Type", "application/json"));
 
 		final ExternalOauth2ResourceAuthoritiesMapper authoritiesExtractor =
-				new ExternalOauth2ResourceAuthoritiesMapper(mockRestTemplate, uri, oauth2TokenUtilsService);
+				new ExternalOauth2ResourceAuthoritiesMapper(webClient, uri);
 		final Set<GrantedAuthority> grantedAuthorities = authoritiesExtractor.mapScopesToAuthorities(new HashSet<>());
 		for (String role : roles) {
 			assertThat(grantedAuthorities, hasItem(new SimpleGrantedAuthority(SecurityConfigUtils.ROLE_PREFIX + role)));
 		}
-
-		verify(mockRestTemplate).exchange(requestArgumentCaptor.capture(), (Class<String[]>)any());
-		final RequestEntity requestEntity = requestArgumentCaptor.getValue();
-		assertThat(requestEntity.getUrl(), equalTo(uri));
-		assertThat(requestEntity.getMethod(), equalTo(HttpMethod.GET));
-		assertThat(requestEntity.getHeaders().get("Authorization"), contains("bearer " + accessToken));
 
 	}
 }
