@@ -14,6 +14,7 @@
  * limitations under the License.
  */package org.springframework.cloud.common.security.support;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -55,27 +56,26 @@ public class ExternalOauth2ResourceAuthoritiesMapperTests {
 	}
 
 	@Test
-	public void testExtractAuthorities() throws JsonProcessingException {
+	public void testExtractAuthorities() throws Exception {
 		assertAuthorities2(mockBackEnd.url("/authorities").uri(), "VIEW");
 		assertAuthorities2(mockBackEnd.url("/authorities").uri(), "VIEW", "CREATE", "MANAGE");
 		assertAuthorities2(mockBackEnd.url("/").uri(), "MANAGE");
 		assertAuthorities2(mockBackEnd.url("/").uri(), "DEPLOY", "DESTROY", "MODIFY", "SCHEDULE");
+		assertThat(mockBackEnd.getRequestCount(), is(4));
 	}
 
-	private void assertAuthorities2(URI uri, String... roles) throws JsonProcessingException {
-
-		WebClient webClient = WebClient.builder().build();
+	private void assertAuthorities2(URI uri, String... roles) throws Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
 		mockBackEnd.enqueue(new MockResponse()
 				.setBody(objectMapper.writeValueAsString(roles))
 				.addHeader("Content-Type", "application/json"));
 
 		final ExternalOauth2ResourceAuthoritiesMapper authoritiesExtractor =
-				new ExternalOauth2ResourceAuthoritiesMapper(webClient, uri);
-		final Set<GrantedAuthority> grantedAuthorities = authoritiesExtractor.mapScopesToAuthorities(new HashSet<>());
+				new ExternalOauth2ResourceAuthoritiesMapper(uri);
+		final Set<GrantedAuthority> grantedAuthorities = authoritiesExtractor.mapScopesToAuthorities(null, new HashSet<>(), "1234567");
 		for (String role : roles) {
 			assertThat(grantedAuthorities, hasItem(new SimpleGrantedAuthority(SecurityConfigUtils.ROLE_PREFIX + role)));
 		}
-
+		assertThat(mockBackEnd.takeRequest().getHeader("Authorization"), is("Bearer 1234567"));
 	}
 }

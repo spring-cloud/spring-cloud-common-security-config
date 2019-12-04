@@ -130,9 +130,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	@Autowired
 	protected OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
-	@Autowired
-	protected WebClient webClient;
-
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 
@@ -204,23 +201,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthoritiesMapper authorityMapper() {
-		AuthoritiesMapper authorityMapper;
-
-		if (StringUtils.isEmpty(authorizationProperties.getExternalAuthoritiesUrl())) {
-			authorityMapper = new DefaultAuthoritiesMapper(
-					authorizationProperties.getProviderRoleMappings(),
-					this.calculateDefaultProviderId());
-		}
-		else {
-			authorityMapper = new ExternalOauth2ResourceAuthoritiesMapper(
-				this.webClient,
-				URI.create(authorizationProperties.getExternalAuthoritiesUrl()));
-		}
-		return authorityMapper;
-	}
-
-	@Bean
 	public OAuth2AuthorizedClientManager authorizedClientManager(
 			ClientRegistrationRepository clientRegistrationRepository,
 			OAuth2AuthorizedClientRepository authorizedClientRepository) {
@@ -249,6 +229,22 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 		return WebClient.builder()
 				.apply(oauth2Client.oauth2Configuration())
 				.build();
+	}
+
+	@Bean
+	public AuthoritiesMapper authorityMapper() {
+		AuthoritiesMapper authorityMapper;
+
+		if (StringUtils.isEmpty(authorizationProperties.getExternalAuthoritiesUrl())) {
+			authorityMapper = new DefaultAuthoritiesMapper(
+					authorizationProperties.getProviderRoleMappings(),
+					this.calculateDefaultProviderId());
+		}
+		else {
+			authorityMapper = new ExternalOauth2ResourceAuthoritiesMapper(
+				URI.create(authorizationProperties.getExternalAuthoritiesUrl()));
+		}
+		return authorityMapper;
 	}
 
 	@Bean
