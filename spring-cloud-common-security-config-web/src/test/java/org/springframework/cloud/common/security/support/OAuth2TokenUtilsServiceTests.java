@@ -15,13 +15,10 @@
  */
 package org.springframework.cloud.common.security.support;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import java.time.Instant;
 
 import org.junit.Test;
+
 import org.springframework.cloud.common.security.core.support.OAuth2TokenUtilsService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +30,12 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AccessToken.TokenType;
 
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 /**
  *
  * @author Gunnar Hillert
@@ -71,9 +74,7 @@ public class OAuth2TokenUtilsServiceTests {
 			oAuth2TokenUtilsService.getAccessTokenOfAuthenticatedUser();
 		}
 		catch (IllegalStateException e) {
-			assertEquals(
-				"Authentication object is not of type OAuth2AuthenticationToken.",
-				e.getMessage());
+			assertTrue(e.getMessage().startsWith("Unsupported authentication object type"));
 			SecurityContextHolder.getContext().setAuthentication(null);
 			return;
 		}
