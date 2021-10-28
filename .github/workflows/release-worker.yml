@@ -38,7 +38,7 @@ jobs:
           --server-id-deploy=repo.spring.io \
           --repo-deploy-releases=libs-staging-local \
           --repo-deploy-snapshots=libs-staging-local
-        echo JFROG_CLI_BUILD_NAME=spring-cloud-common-security-config-main-release >> $GITHUB_ENV
+        echo JFROG_CLI_BUILD_NAME=spring-cloud-common-security-config-17x-release >> $GITHUB_ENV
         echo JFROG_CLI_BUILD_NUMBER=$GITHUB_RUN_NUMBER >> $GITHUB_ENV
 
     # zoo extract and ensure
@@ -73,7 +73,7 @@ jobs:
           -P-spring,stagingrelease \
           -DskipTests -U -B
         jfrog rt build-publish
-        echo BUILD_ZOO_HANDLER_spring_cloud_common_security_config_buildname=spring-cloud-common-security-config-main-release >> $GITHUB_ENV
+        echo BUILD_ZOO_HANDLER_spring_cloud_common_security_config_buildname=spring-cloud-common-security-config-17x-release >> $GITHUB_ENV
         echo BUILD_ZOO_HANDLER_spring_cloud_common_security_config_buildnumber=$GITHUB_RUN_NUMBER >> $GITHUB_ENV
 
     # zoo tag
