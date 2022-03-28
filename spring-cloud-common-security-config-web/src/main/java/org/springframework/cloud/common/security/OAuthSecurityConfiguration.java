@@ -143,8 +143,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     protected OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
 
-
-    @Autowired(required = false)
     protected OpaqueTokenIntrospector opaqueTokenIntrospector;
 
     @Autowired
@@ -159,6 +157,46 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
     protected ProviderManager providerManager;
+
+    public AuthorizationProperties getAuthorizationProperties() {
+        return authorizationProperties;
+    }
+
+    public OpaqueTokenIntrospector getOpaqueTokenIntrospector() {
+        return opaqueTokenIntrospector;
+    }
+
+    public ProviderManager getProviderManager() {
+        return providerManager;
+    }
+
+    public void setAuthorizationProperties(AuthorizationProperties authorizationProperties) {
+        this.authorizationProperties = authorizationProperties;
+    }
+    @Autowired(required = false)
+    public void setOpaqueTokenIntrospector(OpaqueTokenIntrospector opaqueTokenIntrospector) {
+        this.opaqueTokenIntrospector = opaqueTokenIntrospector;
+    }
+
+    public void setProviderManager(ProviderManager providerManager) {
+        this.providerManager = providerManager;
+    }
+
+    public OAuth2ResourceServerProperties getoAuth2ResourceServerProperties() {
+        return oAuth2ResourceServerProperties;
+    }
+
+    public void setoAuth2ResourceServerProperties(OAuth2ResourceServerProperties oAuth2ResourceServerProperties) {
+        this.oAuth2ResourceServerProperties = oAuth2ResourceServerProperties;
+    }
+
+    public SecurityStateBean getSecurityStateBean() {
+        return securityStateBean;
+    }
+
+    public void setSecurityStateBean(SecurityStateBean securityStateBean) {
+        this.securityStateBean = securityStateBean;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
