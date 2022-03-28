@@ -15,9 +15,13 @@
  */
 package org.springframework.cloud.common.security;
 
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.common.security.support.OnOAuth2SecurityEnabled;
+import org.springframework.cloud.common.security.support.SecurityStateBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 /**
@@ -27,10 +31,24 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
  */
 @Configuration
 @Conditional(OnOAuth2SecurityEnabled.class)
+@Import(TestOAuthSecurityConfiguration.SecurityStateBeanConfig.class)
 public class TestOAuthSecurityConfiguration extends OAuthSecurityConfiguration {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         super.configure(http);
+    }
+
+    @Configuration
+    public static class SecurityStateBeanConfig {
+        @Bean
+        public SecurityStateBean securityStateBean() {
+            return new SecurityStateBean();
+        }
+        @Bean
+        @ConfigurationProperties(prefix = "spring.cloud.common.security.test.authorization")
+        public AuthorizationProperties authorizationProperties() {
+            return new AuthorizationProperties();
+        }
     }
 }
