@@ -25,5 +25,16 @@ spring:
           introspection-uri: http://127.0.0.1:8888/oauth/check_token
           client-id: myclient
           client-secret: mysecret
-      authorization:
-        check-token-access: isAuthenticated()
+  cloud:
+    common:
+      security:
+        test:
+          authorization:
+            check-token-access: isAuthenticated()
+            authorization:
+              enabled: true
+              permit-all-paths: "/user,./assets/**,/dashboard/logout-success-oauth.html"
+              authenticated-paths: "/user"
+              rules:
+                # User
+                - GET /user                      => hasRole('ROLE_VIEW')
