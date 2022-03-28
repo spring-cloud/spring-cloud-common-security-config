@@ -15,6 +15,8 @@
  */
 package org.springframework.cloud.common.security;
 
+import java.security.Principal;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
@@ -22,6 +24,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
+import org.springframework.context.annotation.Import;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Minimal application to verify configuration
@@ -35,10 +40,19 @@ import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
         UserDetailsServiceAutoConfiguration.class,
         SessionAutoConfiguration.class
 })
+
+@Import({CommonSecurityAutoConfiguration.class, TestOAuthSecurityConfiguration.class})
 public class SpringCloudCommonSecurityApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SpringCloudCommonSecurityApplication.class, args);
     }
 
+    @RestController
+    public static class SimpleController {
+        @GetMapping("/user")
+        public String getUser(Principal principal) {
+            return principal.getName();
+        }
+    }
 }

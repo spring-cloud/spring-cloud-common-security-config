@@ -1,0 +1,29 @@
+logging:
+  file:
+    name: sccsc-test.log
+  level:
+    org.springframework: DEBUG
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          uaa:
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+            authorization-grant-type: authorization_code
+            client-id: myclient
+            client-secret: mysecret
+            access-token-uri: http://127.0.0.1:8888/oauth/token
+            user-authorization-uri: http://127.0.0.1:8888/oauth/authorize
+        provider:
+          uaa:
+            authorization-uri: http://127.0.0.1:8888/oauth/authorize
+            user-info-uri: http://127.0.0.1:8888/me
+            token-uri: http://127.0.0.1:8888/oauth/token
+      resourceserver:
+        opaquetoken:
+          introspection-uri: http://127.0.0.1:8888/oauth/check_token
+          client-id: myclient
+          client-secret: mysecret
+      authorization:
+        check-token-access: isAuthenticated()
