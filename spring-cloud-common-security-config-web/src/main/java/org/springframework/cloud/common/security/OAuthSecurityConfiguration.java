@@ -143,8 +143,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     protected OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
 
-    protected OpaqueTokenIntrospector opaqueTokenIntrospector;
-
     @Autowired
     @Qualifier("plainOauth2UserService")
     protected OAuth2UserService<OAuth2UserRequest, OAuth2User> plainOauth2UserService;
@@ -152,10 +150,12 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Autowired
     @Qualifier("oidcUserService")
     protected OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService;
+
     @Autowired
     protected LogoutSuccessHandler logoutSuccessHandler;
 
-    @Autowired
+    protected OpaqueTokenIntrospector opaqueTokenIntrospector;
+
     protected ProviderManager providerManager;
 
     public AuthorizationProperties getAuthorizationProperties() {
@@ -173,11 +173,13 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     public void setAuthorizationProperties(AuthorizationProperties authorizationProperties) {
         this.authorizationProperties = authorizationProperties;
     }
+
     @Autowired(required = false)
     public void setOpaqueTokenIntrospector(OpaqueTokenIntrospector opaqueTokenIntrospector) {
         this.opaqueTokenIntrospector = opaqueTokenIntrospector;
     }
 
+    @Autowired(required = false)
     public void setProviderManager(ProviderManager providerManager) {
         this.providerManager = providerManager;
     }
@@ -262,6 +264,24 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.securityStateBean.setAuthenticationEnabled(true);
     }
 
+    protected static String dashboard(AuthorizationProperties authorizationProperties, String path) {
+        return authorizationProperties.getDashboardUrl() + path;
+    }
+
+    private static String calculateDefaultProviderId(AuthorizationProperties authorizationProperties, OAuth2ClientProperties oauth2ClientProperties) {
+        if (authorizationProperties.getDefaultProviderId() != null) {
+            return authorizationProperties.getDefaultProviderId();
+        } else if (oauth2ClientProperties.getRegistration().size() == 1) {
+            return oauth2ClientProperties.getRegistration().entrySet().iterator().next().getKey();
+        } else if (oauth2ClientProperties.getRegistration().size() > 1
+                && !StringUtils.hasText(authorizationProperties.getDefaultProviderId())) {
+            throw new IllegalStateException("defaultProviderId must be set if more than 1 Registration is provided.");
+        } else {
+            throw new IllegalStateException("Unable to retrieve default provider id.");
+        }
+    }
+
+
     protected Converter<Jwt, AbstractAuthenticationToken> grantedAuthoritiesExtractor() {
         String providerId = calculateDefaultProviderId(authorizationProperties, oauth2ClientProperties);
         ProviderRoleMapping providerRoleMapping = authorizationProperties.getProviderRoleMappings().get(providerId);
@@ -283,6 +303,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
+    @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
     public static class OpaqueTokenIntrospectorConfig {
         private final OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
         private final AuthoritiesMapper authoritiesMapper;
@@ -293,7 +314,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
 
         @Bean
-        @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
         protected OpaqueTokenIntrospector opaqueTokenIntrospector() {
             return new CustomAuthoritiesOpaqueTokenIntrospector(
                     this.oAuth2ResourceServerProperties.getOpaquetoken().getIntrospectionUri(),
@@ -400,6 +420,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
     }
 
+    @Configuration
     public static class LogoutSuccessHandlerConfig {
         private final AuthorizationProperties authorizationProperties;
         private final OAuth2TokenUtilsService oauth2TokenUtilsService;
@@ -419,14 +440,19 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
+    @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
     public static class AuthenticationProviderConfig {
         private final OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient;
         private final ClientRegistrationRepository clientRegistrationRepository;
         private final AuthorizationProperties authorizationProperties;
         private final OAuth2ClientProperties oauth2ClientProperties;
 
-        @Autowired(required = false)
         protected OpaqueTokenIntrospector opaqueTokenIntrospector;
+
+        @Autowired(required = false)
+        public void setOpaqueTokenIntrospector(OpaqueTokenIntrospector opaqueTokenIntrospector) {
+            this.opaqueTokenIntrospector = opaqueTokenIntrospector;
+        }
 
         public AuthenticationProviderConfig(OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient, ClientRegistrationRepository clientRegistrationRepository, AuthorizationProperties authorizationProperties, OAuth2ClientProperties oauth2ClientProperties) {
             this.oAuth2PasswordTokenResponseClient = oAuth2PasswordTokenResponseClient;
@@ -436,7 +462,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
 
         @Bean
-        @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
         protected AuthenticationProvider authenticationProvider() {
             return new ManualOAuthAuthenticationProvider(
                     this.oAuth2PasswordTokenResponseClient,
@@ -448,15 +473,20 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
+    @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
     public static class ProviderManagerConfig {
-        private final AuthenticationProvider authenticationProvider;
+        private AuthenticationProvider authenticationProvider;
 
-        public ProviderManagerConfig(AuthenticationProvider authenticationProvider) {
+        public AuthenticationProvider getAuthenticationProvider() {
+            return authenticationProvider;
+        }
+
+        @Autowired(required = false)
+        public void setAuthenticationProvider(AuthenticationProvider authenticationProvider) {
             this.authenticationProvider = authenticationProvider;
         }
 
         @Bean
-        @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
         protected ProviderManager providerManager() {
             List<AuthenticationProvider> providers = new ArrayList<>();
             providers.add(authenticationProvider);
@@ -489,9 +519,6 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    protected static String dashboard(AuthorizationProperties authorizationProperties, String path) {
-        return authorizationProperties.getDashboardUrl() + path;
-    }
 
     protected static class BrowserDetectingContentNegotiationStrategy extends HeaderContentNegotiationStrategy {
 
@@ -517,18 +544,4 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
             return new DefaultPasswordTokenResponseClient();
         }
     }
-
-    private static String calculateDefaultProviderId(AuthorizationProperties authorizationProperties, OAuth2ClientProperties oauth2ClientProperties) {
-        if (authorizationProperties.getDefaultProviderId() != null) {
-            return authorizationProperties.getDefaultProviderId();
-        } else if (oauth2ClientProperties.getRegistration().size() == 1) {
-            return oauth2ClientProperties.getRegistration().entrySet().iterator().next().getKey();
-        } else if (oauth2ClientProperties.getRegistration().size() > 1
-                && !StringUtils.hasText(authorizationProperties.getDefaultProviderId())) {
-            throw new IllegalStateException("defaultProviderId must be set if more than 1 Registration is provided.");
-        } else {
-            throw new IllegalStateException("Unable to retrieve default provider id.");
-        }
-    }
-
 }
