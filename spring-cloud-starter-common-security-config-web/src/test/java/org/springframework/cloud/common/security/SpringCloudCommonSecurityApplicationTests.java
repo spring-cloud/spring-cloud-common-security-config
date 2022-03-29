@@ -27,8 +27,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class SpringCloudCommonSecurityApplicationTests {
 
-    @Test
-    void contextLoads() {
-    }
+	@Test
+	void contextLoads() {
+	}
 
 }

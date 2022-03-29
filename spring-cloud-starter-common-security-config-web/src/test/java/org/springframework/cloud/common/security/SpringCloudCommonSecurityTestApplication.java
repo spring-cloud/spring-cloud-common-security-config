@@ -34,25 +34,25 @@ import org.springframework.web.bind.annotation.RestController;
  * @author Corneil du Plessis
  */
 @SpringBootApplication(exclude = {
-        MetricsAutoConfiguration.class,
-        ManagementWebSecurityAutoConfiguration.class,
-        SecurityAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class,
-        SessionAutoConfiguration.class
+		MetricsAutoConfiguration.class,
+		ManagementWebSecurityAutoConfiguration.class,
+		SecurityAutoConfiguration.class,
+		UserDetailsServiceAutoConfiguration.class,
+		SessionAutoConfiguration.class
 })
 
 @Import({CommonSecurityAutoConfiguration.class, TestOAuthSecurityConfiguration.class})
 public class SpringCloudCommonSecurityTestApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(SpringCloudCommonSecurityTestApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(SpringCloudCommonSecurityTestApplication.class, args);
+	}
 
-    @RestController
-    public static class SimpleController {
-        @GetMapping("/user")
-        public String getUser(Principal principal) {
-            return principal.getName();
-        }
-    }
+	@RestController
+	public static class SimpleController {
+		@GetMapping("/user")
+		public String getUser(Principal principal) {
+			return principal.getName();
+		}
+	}
 }

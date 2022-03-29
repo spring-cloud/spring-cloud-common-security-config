@@ -28,21 +28,22 @@ import org.springframework.context.annotation.Import;
  *
  * @author Corneil du Plessis
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Conditional(OnOAuth2SecurityEnabled.class)
 @Import(TestOAuthSecurityConfiguration.SecurityStateBeanConfig.class)
 public class TestOAuthSecurityConfiguration extends OAuthSecurityConfiguration {
 
-    @Configuration
-    public static class SecurityStateBeanConfig {
-        @Bean
-        public SecurityStateBean securityStateBean() {
-            return new SecurityStateBean();
-        }
-        @Bean
-        @ConfigurationProperties(prefix = "spring.cloud.common.security.test.authorization")
-        public AuthorizationProperties authorizationProperties() {
-            return new AuthorizationProperties();
-        }
-    }
+	@Configuration(proxyBeanMethods = false)
+	public static class SecurityStateBeanConfig {
+		@Bean
+		public SecurityStateBean securityStateBean() {
+			return new SecurityStateBean();
+		}
+
+		@Bean
+		@ConfigurationProperties(prefix = "spring.cloud.common.security.test.authorization")
+		public AuthorizationProperties authorizationProperties() {
+			return new AuthorizationProperties();
+		}
+	}
 }
