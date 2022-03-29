@@ -42,10 +42,10 @@ import org.springframework.web.bind.annotation.RestController;
 })
 
 @Import({CommonSecurityAutoConfiguration.class, TestOAuthSecurityConfiguration.class})
-public class SpringCloudCommonSecurityApplication {
+public class SpringCloudCommonSecurityTestApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SpringCloudCommonSecurityApplication.class, args);
+        SpringApplication.run(SpringCloudCommonSecurityTestApplication.class, args);
     }
 
     @RestController

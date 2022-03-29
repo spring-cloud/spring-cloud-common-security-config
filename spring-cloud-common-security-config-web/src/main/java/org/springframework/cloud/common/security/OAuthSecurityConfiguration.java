@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 the original author or authors.
+ * Copyright 2016-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import java.util.List;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -101,6 +100,7 @@ import org.springframework.web.reactive.function.client.WebClient;
  *
  * @author Gunnar Hillert
  * @author Ilayaperumal Gopinathan
+ * @author Corneil du Plessis
  */
 @Configuration
 @ConditionalOnClass(WebSecurityConfigurerAdapter.class)
@@ -144,11 +144,9 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     protected OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
 
     @Autowired
-    @Qualifier("plainOauth2UserService")
     protected OAuth2UserService<OAuth2UserRequest, OAuth2User> plainOauth2UserService;
 
     @Autowired
-    @Qualifier("oidcUserService")
     protected OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService;
 
     @Autowired
@@ -304,7 +302,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Configuration
     @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
-    public static class OpaqueTokenIntrospectorConfig {
+    protected static class OpaqueTokenIntrospectorConfig {
         private final OAuth2ResourceServerProperties oAuth2ResourceServerProperties;
         private final AuthoritiesMapper authoritiesMapper;
 
@@ -324,7 +322,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class OidcUserServiceConfig {
+    protected static class OidcUserServiceConfig {
         private final AuthoritiesMapper authoritiesMapper;
 
         public OidcUserServiceConfig(AuthoritiesMapper authoritiesMapper) {
@@ -338,7 +336,8 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    public static class PlainOauth2UserServiceConfig {
+    @Configuration
+    protected static class PlainOauth2UserServiceConfig {
         private final AuthoritiesMapper authoritiesMapper;
 
         public PlainOauth2UserServiceConfig(AuthoritiesMapper authoritiesMapper) {
@@ -352,7 +351,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class OAuth2AuthorizedClientManagerConfig {
+    protected static class OAuth2AuthorizedClientManagerConfig {
 
         @Bean
         public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -378,7 +377,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class WebClientConfig {
+    protected static class WebClientConfig {
         @Bean
         WebClient webClient(OAuth2AuthorizedClientManager authorizedClientManager) {
             ServletOAuth2AuthorizedClientExchangeFilterFunction oauth2Client =
@@ -391,7 +390,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class AuthoritiesMapperConfig {
+    protected static class AuthoritiesMapperConfig {
 
         private final AuthorizationProperties authorizationProperties;
         private final OAuth2ClientProperties oAuth2ClientProperties;
@@ -421,7 +420,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class LogoutSuccessHandlerConfig {
+    protected static class LogoutSuccessHandlerConfig {
         private final AuthorizationProperties authorizationProperties;
         private final OAuth2TokenUtilsService oauth2TokenUtilsService;
 
@@ -441,7 +440,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Configuration
     @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
-    public static class AuthenticationProviderConfig {
+    protected static class AuthenticationProviderConfig {
         private final OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient;
         private final ClientRegistrationRepository clientRegistrationRepository;
         private final AuthorizationProperties authorizationProperties;
@@ -474,7 +473,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Configuration
     @ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.opaquetoken", value = "introspection-uri")
-    public static class ProviderManagerConfig {
+    protected static class ProviderManagerConfig {
         private AuthenticationProvider authenticationProvider;
 
         public AuthenticationProvider getAuthenticationProvider() {
@@ -495,7 +494,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class OAuth2TokenUtilsServiceConfig {
+    protected static class OAuth2TokenUtilsServiceConfig {
 
         private final OAuth2AuthorizedClientService oauth2AuthorizedClientService;
 
@@ -510,7 +509,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class OAuth2AuthenticationFailureEventConfig {
+    protected static class OAuth2AuthenticationFailureEventConfig {
         @EventListener
         public void handleOAuth2AuthenticationFailureEvent(
                 AbstractAuthenticationFailureEvent authenticationFailureEvent) {
@@ -538,7 +537,7 @@ public class OAuthSecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Configuration
-    public static class OAuth2AccessTokenResponseClientConfig {
+    protected static class OAuth2AccessTokenResponseClientConfig {
         @Bean
         OAuth2AccessTokenResponseClient<OAuth2PasswordGrantRequest> oAuth2PasswordTokenResponseClient() {
             return new DefaultPasswordTokenResponseClient();
