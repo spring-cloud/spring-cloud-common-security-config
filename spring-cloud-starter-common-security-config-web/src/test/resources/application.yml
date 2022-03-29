@@ -1,6 +1,6 @@
 logging:
-  file:
-    name: sccsc-test.log
+#  file:
+#    name: sccsc-test.log
   level:
     org.springframework: DEBUG
 spring:
