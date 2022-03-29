@@ -22,10 +22,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 
 /**
- * Setup Spring Security OAuth for the Rest Endpoint.
+ * We need to mimic the configuration of Dataflow and Skipper
  *
  * @author Corneil du Plessis
  */
@@ -33,11 +32,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 @Conditional(OnOAuth2SecurityEnabled.class)
 @Import(TestOAuthSecurityConfiguration.SecurityStateBeanConfig.class)
 public class TestOAuthSecurityConfiguration extends OAuthSecurityConfiguration {
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        super.configure(http);
-    }
 
     @Configuration
     public static class SecurityStateBeanConfig {
