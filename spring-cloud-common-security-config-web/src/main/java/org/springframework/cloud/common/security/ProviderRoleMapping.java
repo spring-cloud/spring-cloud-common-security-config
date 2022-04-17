@@ -37,6 +37,7 @@ public class ProviderRoleMapping {
 	private String rolePrefix = "ROLE_";
 	private String groupClaim = "roles";
 	private boolean mapOauthScopes = false;
+	private boolean parsePathParts = true;
 	private boolean mapGroupClaims = false;
 	private Map<String, String> roleMappings = new HashMap<>(0);
 	private Map<String, String> groupMappings = new HashMap<>(0);
@@ -54,6 +55,14 @@ public class ProviderRoleMapping {
 		Assert.notNull(roleMappings, "roleMappings must not be null.");
 		this.mapOauthScopes = mapOauthScopes;
 		this.roleMappings = roleMappings;
+	}
+
+	public boolean isParsePathParts() {
+		return parsePathParts;
+	}
+
+	public void setParsePathParts(boolean parsePathParts) {
+		this.parsePathParts = parsePathParts;
 	}
 
 	public boolean isMapOauthScopes() {
