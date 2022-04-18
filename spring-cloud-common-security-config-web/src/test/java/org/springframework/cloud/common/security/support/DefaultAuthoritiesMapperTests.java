@@ -240,7 +240,7 @@ public class DefaultAuthoritiesMapperTests {
 
 		ProviderRoleMapping providerRoleMapping = new ProviderRoleMapping();
 		providerRoleMapping.setMapOauthScopes(true);
-		providerRoleMapping.setParsePathParts(false);
+		providerRoleMapping.setParseOAuthPathParts(false);
 		providerRoleMapping.getRoleMappings().putAll(roleMappings);
 
 		Set<String> scopes = new HashSet<>();
