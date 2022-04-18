@@ -148,7 +148,7 @@ public class DefaultAuthoritiesMapper implements AuthoritiesMapper {
 				for (Map.Entry<CoreSecurityRoles, String> roleMappingEngtry : roleMapping.convertRoleMappingKeysToCoreSecurityRoles().entrySet()) {
 					final CoreSecurityRoles role = roleMappingEngtry.getKey();
 					final String expectedOAuthScope = roleMappingEngtry.getValue();
-					Set<String> scopeList = roleMapping.isParseOAuthPathParts() ? pathParts(scopes) : scopes;
+					Set<String> scopeList = roleMapping.isParseOauthScopePathParts() ? pathParts(scopes) : scopes;
 					for (String scope : scopeList) {
 						if (scope.equalsIgnoreCase(expectedOAuthScope)) {
 							final SimpleGrantedAuthority oauthRoleAuthority = new SimpleGrantedAuthority(roleMapping.getRolePrefix() + role.getKey());
