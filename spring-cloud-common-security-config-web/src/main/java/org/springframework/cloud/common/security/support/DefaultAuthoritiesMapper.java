@@ -70,7 +70,7 @@ public class DefaultAuthoritiesMapper implements AuthoritiesMapper {
 	public DefaultAuthoritiesMapper(String providerId, boolean mapOAuthScopes, Map<String, String> roleMappings) {
 		Assert.hasText(providerId, "The providerId must not be null or empty.");
 		final ProviderRoleMapping providerRoleMapping = new ProviderRoleMapping(mapOAuthScopes, roleMappings);
-		this.providerRoleMappings = new HashMap<String, ProviderRoleMapping>(1);
+		this.providerRoleMappings = new HashMap<>(1);
 		this.providerRoleMappings.put(providerId, providerRoleMapping);
 		for (ProviderRoleMapping providerRoleMappingToValidate : providerRoleMappings.values()) {
 			providerRoleMappingToValidate.convertRoleMappingKeysToCoreSecurityRoles();
@@ -88,7 +88,7 @@ public class DefaultAuthoritiesMapper implements AuthoritiesMapper {
 	public DefaultAuthoritiesMapper(String providerId, boolean mapOAuthScopes) {
 		Assert.hasText(providerId, "The providerId must not be null or empty.");
 		final ProviderRoleMapping providerRoleMapping = new ProviderRoleMapping(mapOAuthScopes);
-		this.providerRoleMappings = new HashMap<String, ProviderRoleMapping>(1);
+		this.providerRoleMappings = new HashMap<>(1);
 		this.providerRoleMappings.put(providerId, providerRoleMapping);
 		for (ProviderRoleMapping providerRoleMappingToValidate : providerRoleMappings.values()) {
 			providerRoleMappingToValidate.convertRoleMappingKeysToCoreSecurityRoles();
@@ -104,7 +104,7 @@ public class DefaultAuthoritiesMapper implements AuthoritiesMapper {
 	 * @param providerRoleMapping The role mappings to add to the {@link ProviderRoleMapping}
 	 */
 	public DefaultAuthoritiesMapper(String providerId, ProviderRoleMapping providerRoleMapping) {
-		this.providerRoleMappings = new HashMap<String, ProviderRoleMapping>(1);
+		this.providerRoleMappings = new HashMap<>(1);
 		this.providerRoleMappings.put(providerId, providerRoleMapping);
 		for (ProviderRoleMapping providerRoleMappingToValidate : providerRoleMappings.values()) {
 			providerRoleMappingToValidate.convertRoleMappingKeysToCoreSecurityRoles();
